@@ -15,6 +15,11 @@ class ITile(ABC):
         pass
 
     @abstractmethod
+    def deal_damage(self) -> int:
+        """fire tiles burn visitor, spawn tiles hurt visitor, etc"""
+        pass
+
+    @abstractmethod
     def __repr__(self):
         pass
 
@@ -25,6 +30,9 @@ class Tile(ITile):
 
     def damage(self, amount):
         pass
+
+    def deal_damage(self):
+        return 0
 
     def can_move_through(self):
         return True
@@ -89,6 +97,11 @@ class TileInst(ITile):
         self.type_object.heal(amount)
         if self.visitor:
             self.visitor.health += amount
+
+    def deal_damage(self):
+        dmg = self.type_object.deal_damage()
+        self.damage(dmg)
+        return dmg
 
     def damage(self, amount):
         self.type_object.damage(amount)

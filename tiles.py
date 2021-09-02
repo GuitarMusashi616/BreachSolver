@@ -46,10 +46,16 @@ class ForestFireTile(Tile):
     def __repr__(self):
         return "🔥"
 
+    def deal_damage(self):
+        return 1
+
 
 class SpawnTile(Tile):
     def __repr__(self):
         return "⬆️"
+
+    def deal_damage(self):
+        return 1
 
 
 class CivilianTile(DestructableTile):

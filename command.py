@@ -8,6 +8,18 @@ class ICommand(ABC):
     def execute(self):
         pass
 
+    @abstractmethod
+    def undo(self):
+        pass
+
+
+class NullCommand(ICommand):
+    def execute(self):
+        super().execute()
+
+    def undo(self):
+        super().execute()
+
 
 class MoveCommand(ICommand):
     def __init__(self, grid, unit_coord, to_coord):
@@ -72,6 +84,21 @@ class DamageCommand(ICommand):
             tile.heal(self.amount)
         except IndexError:
             pass
+
+
+class DamageUnitCommand(ICommand):
+    def __init__(self, unit, amount):
+        self.unit = unit
+        self.amount = amount
+
+    def __repr__(self):
+        return f"DAMAGE {self.unit} -{self.amount}"
+
+    def execute(self):
+        self.unit.health -= self.amount
+
+    def undo(self):
+        self.unit.health += self.amount
 
 
 class PushCommand(ICommand):

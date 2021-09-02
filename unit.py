@@ -1,5 +1,6 @@
 from abc import ABC, abstractmethod
 
+from command import NullCommand
 from util import Util
 
 
@@ -136,10 +137,14 @@ class Mech(Unit):
 
 
 class Vek(Unit):
-    @property
-    def intended_command(self):
-        return self._intended_command
+    def __init__(self, name, max_health=4, health=4, moves=3):
+        super().__init__(name, max_health, health, moves)
+        self.target = NullCommand()
 
-    @intended_command.setter
-    def intended_command(self, command):
-        self._intended_command = command
+    @property
+    def target(self):
+        return self._target
+
+    @target.setter
+    def target(self, command):
+        self._target = command

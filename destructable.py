@@ -18,6 +18,9 @@ class Destructable(ITile):
     def vek_can_emerge(self):
         return self.tile.vek_can_emerge()
 
+    def deal_damage(self):
+        return 0
+
     @property
     def health(self):
         return self._health
