@@ -42,12 +42,12 @@ class HealCommand(ICommand):
             self.healed_amount = 0
             return
 
-        self.unit.heal(self.amount)
+        self.unit.health += self.amount
         self.healed_amount = self.amount
 
     def undo(self):
         assert self.healed_amount is not None, "has yet to heal"
-        self.unit.damage(self.healed_amount)
+        self.unit.health -= self.healed_amount
 
 
 class DamageCommand(ICommand):
