@@ -49,7 +49,7 @@ class IUnit(ABC):
 
 
 class Unit(IUnit):
-    def __init__(self, name, max_health=4, health=4, moves=3):
+    def __init__(self, name, max_health=1, health=1, moves=0):
         self.name = name
         self.max_health = max_health
         self.health = health
@@ -133,11 +133,12 @@ class Unit(IUnit):
 
 
 class Mech(Unit):
-    pass
+    def __init__(self, name, max_health=4, health=4, moves=3):
+        super().__init__(name, max_health, health, moves)
 
 
 class Vek(Unit):
-    def __init__(self, name, max_health=4, health=4, moves=3):
+    def __init__(self, name, max_health=3, health=3, moves=3):
         super().__init__(name, max_health, health, moves)
         self.target = NullCommand()
 

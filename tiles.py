@@ -5,6 +5,9 @@ class GroundTile(Tile):
     def __repr__(self):
         return "🟢"
 
+    def vek_can_emerge(self):
+        return True
+
 
 class WaterTile(Tile):
     def __repr__(self):
@@ -23,9 +26,6 @@ class DestructableTile(Tile):
         self._health = value
 
     def can_move_through(self):
-        return False
-
-    def vek_can_emerge(self):
         return False
 
 
@@ -53,6 +53,9 @@ class ForestFireTile(Tile):
 class SpawnTile(Tile):
     def __repr__(self):
         return "⬆️"
+
+    def vek_can_emerge(self):
+        return True
 
     def deal_damage(self):
         return 1

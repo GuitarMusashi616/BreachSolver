@@ -1,12 +1,13 @@
 from IPython.core.display import display
 from IPython.display import clear_output
 from time import sleep
-history = []
+from executor import Executor
 
 
 class Game:
     def __init__(self, grid):
         self.grid = grid
+        self.ex = Executor()
         self.round(1)
 
     def show(self):
@@ -32,6 +33,10 @@ class Game:
             choice = input(query)
             if choice == "":
                 return
+            elif choice == "undo":
+                self.ex.undo()
+                self.show()
+                continue
             try:
                 num = int(choice)
                 assert 0 < num <= len(ls)
@@ -61,8 +66,7 @@ class Game:
         actions = mech.gen_actions()
         while actions:
             action = self.make_choice("Which Move? ", actions)
-            action.execute()
-            history.append(action)
+            self.ex.execute(action)
             self.clear()
             self.show()
             actions = mech.gen_actions()

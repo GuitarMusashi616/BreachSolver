@@ -209,6 +209,30 @@ class PushAwayCommand(CompositeCommand):
         super().__init__(commands)
 
 
+class SpawnCommand(ICommand):
+    def __init__(self, grid, coord, new_unit):
+        self.grid = grid
+        self.coord = coord
+        self.new_unit = new_unit
+        self.executed_command = None
+
+    def execute(self):
+        tile = self.grid.get_tile(self.coord)
+        assert tile.vek_can_emerge(), "vek cannot spawn from this tile"
+        if tile.visitor is None:
+            self.executed_command = SummonCommand(self.new_unit, self.grid, self.coord)
+        else:
+            self.executed_command = DamageUnitCommand(tile.visitor, 1)
+        self.executed_command.execute()
+
+    def undo(self):
+        assert self.executed_command is not None, "SpawnCommand yet to be activated"
+        self.executed_command.undo()
+
+    def __repr__(self):
+        return f"SPAWNING {self.new_unit} at {self.coord}"
+
+
 class CommandDecorator(ICommand):
     "Keeps track of whether command has been executed already or not, also updates unit state based on if command has been executed"
 
