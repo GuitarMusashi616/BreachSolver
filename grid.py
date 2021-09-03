@@ -35,11 +35,14 @@ class Grid(IGrid):
 
     @property
     def mechs(self):
-        return [v for k, v in self.units.items() if isinstance(v, Mech) and v.is_alive]
+        return [v for k,v in self.units.items() if isinstance(v, Mech) and v.is_alive]
 
     @property
     def veks(self):
-        return [v for k, v in self.units.items() if isinstance(v, Vek) and v.is_alive]
+        return [v for k,v in self.units.items() if isinstance(v, Vek) and v.is_alive]
+
+    def find(self, unit_name):
+        return self.units[unit_name]
 
     #     def show_coords(self, coords):
     #         terrain = self.show()
@@ -70,13 +73,26 @@ class Grid(IGrid):
         tile_inst.place(unit)
         unit.coord = coord
 
+    @staticmethod
+    def add_to_units(units, unit):
+        while unit.name in units:
+            try:
+                num = int(unit.name[-1])
+                unit.name = unit.name[:-1] + str(num + 1)
+            except ValueError:
+                unit.name = unit.name + " 2"
+
+        units[unit.name] = unit
+
     def summon(self, unit, coord):
         self.place_on_tile(self.tiles, unit, coord)
+        self.add_to_units(self.units, unit)
 
     def unsummon(self, unit, coord):
         tile = self.get_tile(coord)
         if tile.visitor == unit:
             tile.visitor = None
+        del self.units[unit.name]
 
     #     def push(self, coord, dcoord):
     #         assert dcoord in {(-1,0),(1,0),(0,-1),(0,1)}, f"{dcoord} is an invalid direction vector"

@@ -7,8 +7,6 @@ import pandas as pd
 class GridBuilder:
     def __init__(self, square_len=8):
         self.tiles = []
-        self.mechs = []
-        self.veks = []
         self.units = {}
 
         self.square_len = square_len
@@ -30,7 +28,7 @@ class GridBuilder:
 
     def place_on_tile(self, unit, coord):
         Grid.place_on_tile(self.tiles, unit, coord)
-        self.units[unit.name] = unit
+        Grid.add_to_units(self.units, unit)
 
     #         if isinstance(unit, Vek):
     #             self.veks.append(unit)

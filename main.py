@@ -55,13 +55,22 @@ def reset_grid():
     gb.place(ForestTile(), (7, 3))
     gb.place(Destructable(MountainTile(), GroundTile(), 3), (7, 7))
 
-    gb.place_on_tile(Mech("Siege Mech", 5, 4), (3, 2))
-    gb.place_on_tile(Mech("Artillery Mech", 5, 1), (5, 3))
-    gb.place_on_tile(Mech("Boulder Mech", 5, 5, 4), (7, 3))
-    gb.place_on_tile(Vek("Psy", 5, 2), (4, 2))
-    gb.place_on_tile(Vek("Alpha Firefly", 6, 5, 2), (4, 4))
-    gb.place_on_tile(Vek("Scarab", 3, 3), (6, 1))
-    gb.place_on_tile(Vek("Firefly", 4, 4, 2), (6, 5))
+    siege_mech     = Mech("Siege Mech", 5, 4)
+    artillery_mech = Mech("Artillery Mech", 5, 1)
+    boulder_mech   = Mech("Boulder Mech", 5, 5, 4)
+
+    firefly       = Vek("Firefly", 4, 4, 2)
+    alpha_firefly = Vek("Alpha Firefly", 6, 5, 2)
+    scarab        = Vek("Scarab", 3, 3)
+    psy           = Vek("Psy", 5, 2)
+
+    gb.place_on_tile(siege_mech, (3, 2))
+    gb.place_on_tile(artillery_mech, (5, 3))
+    gb.place_on_tile(boulder_mech, (7, 3))
+    gb.place_on_tile(firefly, (6, 5))
+    gb.place_on_tile(alpha_firefly, (4, 4))
+    gb.place_on_tile(scarab, (6, 1))
+    gb.place_on_tile(psy, (4, 2))
     gb.place_on_tile(Unit("Boulder", max_health=1, health=1, moves=0), (7, 5))
 
     grid = gb.to_grid()
@@ -72,15 +81,6 @@ def reset_grid():
 
     for vek in grid.veks:
         vek.add(Move(vek, grid))
-
-    siege_mech = grid.units['Siege Mech']
-    artillery_mech = grid.units['Artillery Mech']
-    boulder_mech = grid.units['Boulder Mech']
-
-    firefly = grid.units['Firefly']
-    alpha_firefly = grid.units['Alpha Firefly']
-    scarab = grid.units['Scarab']
-    psy = grid.units['Psy']
 
     siege_mech.add(Artillery(siege_mech, grid, ClusterShell, 2))
     boulder_mech.add(Artillery(boulder_mech, grid, BoulderShell, 2))

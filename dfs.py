@@ -72,7 +72,7 @@ class DFS:
         commands = []
 
         commands.extend([
-            DamageUnitCommand(grid.units['Alpha Firefly'], 1, grid),
+            DamageUnitCommand(grid.find('Alpha Firefly'), 1, grid),
             DamageCommand(grid, (5, 1), 1),
             DamageCommand(grid, (5, 1), 2),
             DamageCommand(grid, (6, 3), 1),
