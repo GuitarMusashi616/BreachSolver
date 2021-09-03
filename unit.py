@@ -54,6 +54,7 @@ class Unit(IUnit):
         self.health = health
         self.moves = moves
         self.abilities = []
+        self.on_death = []
         self.is_flying = False
         self.is_massive = False
         self.has_moved = False

@@ -145,6 +145,8 @@ class DamageUnitCommand(ICommand):
             tile = self.grid.get_tile(self.unit.coord)
             tile.visitor = None
             self.died = True
+            for command in self.unit.on_death:
+                command.execute()
 
     def undo(self):
         if self.damage_dealt is not None:
@@ -152,6 +154,8 @@ class DamageUnitCommand(ICommand):
         if self.died:
             tile = self.grid.get_tile(self.unit.coord)
             tile.visitor = self.unit
+            for command in self.unit.on_death[::-1]:
+                command.undo()
         self.died = None
         self.damage_dealt = None
 

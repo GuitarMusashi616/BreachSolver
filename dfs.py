@@ -4,7 +4,7 @@ from command import MoveCommand, DamageUnitCommand, DamageCommand, SpawnCommand
 from destructable import Destructable
 from tiles import CorporateTile, CivilianTile
 from unit import Vek
-
+from main import reset_grid
 
 class DFS:
     def __init__(self, grid, cutoff=None):
@@ -130,9 +130,16 @@ class DFS:
         return score
 
     def show(self):
-        ls = list(self.explored.items())
-        ls.sort(key=lambda x: x[1], reverse=True)
+        ls = self.get_best()
         for ins, score in ls:
             print(score)
             for line in ins.split("_"):
                 print(line)
+
+    def get_best(self):
+        ls = list(self.explored.items())
+        ls.sort(key=lambda x: x[1], reverse=True)
+        return ls
+
+
+
