@@ -62,11 +62,35 @@ class HealCommand(ICommand):
         self.unit.health -= self.healed_amount
 
 
+# class DamageCommand(ICommand):
+# #     def __init__(self, grid, coord, amount):
+# #         self.grid = grid
+# #         self.coord = coord
+# #         self.amount = amount
+# #
+# #     def __repr__(self):
+# #         return f"DAMAGE {self.coord} -{self.amount}"
+# #
+# #     def execute(self):
+# #         try:
+# #             tile = self.grid.get_tile(self.coord)
+# #             tile.damage(self.amount)
+# #         except IndexError:
+# #             pass
+# #
+# #     def undo(self):
+# #         try:
+# #             tile = self.grid.get_tile(self.coord)
+# #             tile.heal(self.amount)
+# #         except IndexError:
+# #             pass
 class DamageCommand(ICommand):
     def __init__(self, grid, coord, amount):
         self.grid = grid
         self.coord = coord
         self.amount = amount
+        self.damage_unit_command = None
+        self.tile_damage_dealt = None
 
     def __repr__(self):
         return f"DAMAGE {self.coord} -{self.amount}"
@@ -74,31 +98,63 @@ class DamageCommand(ICommand):
     def execute(self):
         try:
             tile = self.grid.get_tile(self.coord)
-            tile.damage(self.amount)
+            if tile.type_object.health:
+                before = tile.type_object.health
+                tile.type_object.health -= self.amount
+                after = tile.type_object.health
+                self.tile_damage_dealt = before-after
+
+            if tile.visitor:
+                self.damage_unit_command = DamageUnitCommand(tile.visitor, self.amount, self.grid)
+                self.damage_unit_command.execute()
         except IndexError:
             pass
 
     def undo(self):
         try:
-            tile = self.grid.get_tile(self.coord)
-            tile.heal(self.amount)
+            if self.tile_damage_dealt is not None:
+                tile = self.grid.get_tile(self.coord)
+                tile.type_object.heal(self.tile_damage_dealt)
+            if self.damage_unit_command is not None:
+                self.damage_unit_command.undo()
+            self.damage_unit_command = None
+            self.tile_damage_dealt = None
         except IndexError:
             pass
 
 
 class DamageUnitCommand(ICommand):
-    def __init__(self, unit, amount):
+    def __init__(self, unit, amount, grid):
         self.unit = unit
         self.amount = amount
+        self.grid = grid
+        self.damage_dealt = None
+        self.died = None
 
     def __repr__(self):
         return f"DAMAGE {self.unit} -{self.amount}"
 
     def execute(self):
+        living_before = self.unit.is_alive
+        if not living_before:
+            return  # don't do anything if the unit is already dead
+        before = self.unit.health
         self.unit.health -= self.amount
+        after = self.unit.health
+        self.damage_dealt = before - after
+        if living_before and not self.unit.is_alive:
+            tile = self.grid.get_tile(self.unit.coord)
+            tile.visitor = None
+            self.died = True
 
     def undo(self):
-        self.unit.health += self.amount
+        if self.damage_dealt is not None:
+            self.unit.health += self.damage_dealt
+        if self.died:
+            tile = self.grid.get_tile(self.unit.coord)
+            tile.visitor = self.unit
+        self.died = None
+        self.damage_dealt = None
 
 
 class PushCommand(ICommand):
@@ -222,7 +278,7 @@ class SpawnCommand(ICommand):
         if tile.visitor is None:
             self.executed_command = SummonCommand(self.new_unit, self.grid, self.coord)
         else:
-            self.executed_command = DamageUnitCommand(tile.visitor, 1)
+            self.executed_command = DamageUnitCommand(tile.visitor, 1, self.grid)
         self.executed_command.execute()
 
     def undo(self):

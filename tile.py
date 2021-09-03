@@ -25,6 +25,14 @@ class ITile(ABC):
 
 
 class Tile(ITile):
+    @property
+    def health(self):
+        return False
+
+    @health.setter
+    def health(self, value):
+        pass
+
     def heal(self, amount):
         pass
 

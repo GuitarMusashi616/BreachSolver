@@ -1,11 +1,16 @@
-from ability import Move, Repair, Artillery
+from ability import Move, Repair, Artillery, Beam
+from beam import VekBeam
+from command import CommandDecorator
 from destructable import Destructable
+from dfs import DFS
+from executor import Executor
 from game import Game
 from grid_builder import GridBuilder
-from shell import ClusterShell, BoulderShell, RegularShell
+from shell import ClusterShell, BoulderShell, RegularShell, VekShell
 from tiles import WaterTile, MountainTile, GroundTile, CorporateTile, ForestTile, CivilianTile, ForestFireTile, \
     SpawnTile
 from unit import Mech, Vek, Unit
+from util import Compass
 
 
 def main():
@@ -51,13 +56,13 @@ def main():
     gb.place(ForestTile(), (7, 3))
     gb.place(Destructable(MountainTile(), GroundTile(), 3), (7, 7))
 
-    gb.place_on_tile(Mech("Siege Mech"), (3, 2))
-    gb.place_on_tile(Mech("Artillery Mech"), (5, 3))
-    gb.place_on_tile(Mech("Boulder Mech"), (7, 3))
-    gb.place_on_tile(Vek("Psy"), (4, 2))
-    gb.place_on_tile(Vek("Alpha Firefly"), (4, 4))
-    gb.place_on_tile(Vek("Scarab"), (6, 1))
-    gb.place_on_tile(Vek("Firefly"), (6, 5))
+    gb.place_on_tile(Mech("Siege Mech", 5, 4), (3, 2))
+    gb.place_on_tile(Mech("Artillery Mech", 5, 1), (5, 3))
+    gb.place_on_tile(Mech("Boulder Mech", 5, 5, 4), (7, 3))
+    gb.place_on_tile(Vek("Psy", 5, 2), (4, 2))
+    gb.place_on_tile(Vek("Alpha Firefly", 6, 5, 2), (4, 4))
+    gb.place_on_tile(Vek("Scarab", 3, 3), (6, 1))
+    gb.place_on_tile(Vek("Firefly", 4, 4, 2), (6, 5))
     gb.place_on_tile(Unit("Boulder", max_health=1, health=1, moves=0), (7, 5))
 
     grid = gb.to_grid()
@@ -82,8 +87,169 @@ def main():
     boulder_mech.add(Artillery(boulder_mech, grid, BoulderShell, 2))
     artillery_mech.add(Artillery(artillery_mech, grid, RegularShell, 1))
 
-    Game(grid)
+    firefly.add(Beam(firefly, grid, VekBeam, 1))
+    alpha_firefly.add(Beam(alpha_firefly, grid, VekBeam, 3))
+    scarab.add(Artillery(scarab, grid, VekShell, 1))
+
+    firefly.target = CommandDecorator(firefly, VekBeam(firefly, grid, Compass.NORTH, 1))
+    alpha_firefly.target = CommandDecorator(alpha_firefly, VekBeam(alpha_firefly, grid, Compass.NORTH, 3))
+    scarab.target = CommandDecorator(scarab, VekShell(scarab, grid, 1, (1, 1)))
+
+    return grid
+
+
+def test_bug(grid):
+    ex = Executor()
+
+    score = DFS.rate(grid)
+
+    DFS.rate_dict(grid, True)
+
+    frontier = DFS.gen_rated_frontier(grid)
+    frontier.sort(key=lambda x:x[1], reverse=True)
+    frontier
+
+    ex.execute(frontier[0][0])
+    score = DFS.rate(grid)
+
+    frontier = DFS.gen_rated_frontier(grid)
+    frontier.sort(key=lambda x:x[1], reverse=True)
+    frontier
+
+    ex.execute(frontier[0][0])
+    score = DFS.rate(grid)
+
+    frontier = DFS.gen_rated_frontier(grid)
+    frontier.sort(key=lambda x:x[1], reverse=True)
+    frontier
+
+    ex.execute(frontier[0][0])
+    score = DFS.rate(grid)
+
+    frontier = DFS.gen_rated_frontier(grid)
+    frontier.sort(key=lambda x:x[1], reverse=True)
+    frontier
+
+    ex.execute(frontier[0][0])
+    score = DFS.rate(grid)
+
+    frontier = DFS.gen_rated_frontier(grid)
+    frontier.sort(key=lambda x:x[1], reverse=True)
+    frontier
+
+    ex.execute(frontier[0][0])
+    score = DFS.rate(grid)
+
+    frontier = DFS.gen_rated_frontier(grid)
+    frontier.sort(key=lambda x:x[1], reverse=True)
+    frontier
+
+    ex.execute(frontier[0][0])
+    score = DFS.rate(grid)
+
+    ex.undo()
+    score = DFS.rate(grid)
+
+    ex.execute(frontier[1][0])
+    score = DFS.rate(grid)
+
+    ex.undo()
+    score = DFS.rate(grid)
+
+    ex.undo()
+    score = DFS.rate(grid)
+
+    frontier = DFS.gen_rated_frontier(grid)
+    frontier.sort(key=lambda x:x[1], reverse=True)
+    frontier
+
+    ex.execute(frontier[1][0])
+    score = DFS.rate(grid)
+
+    frontier = DFS.gen_rated_frontier(grid)
+    frontier.sort(key=lambda x:x[1], reverse=True)
+    frontier
+
+    ex.execute(frontier[0][0])
+    score = DFS.rate(grid)
+
+    ex.undo()
+    score = DFS.rate(grid)
+
+    frontier = DFS.gen_rated_frontier(grid)
+    frontier.sort(key=lambda x:x[1], reverse=True)
+    frontier
+
+    ex.execute(frontier[1][0])
+    score = DFS.rate(grid)
+
+    ex.undo()
+    score = DFS.rate(grid)
+
+    ex.undo()
+    score = DFS.rate(grid)
+
+    frontier = DFS.gen_rated_frontier(grid)
+    frontier.sort(key=lambda x:x[1], reverse=True)
+    frontier
+
+    ex.execute(frontier[2][0])
+    score = DFS.rate(grid)
+
+    show = grid.show()
+
+    dic = DFS.rate_dict(grid, True)
+
+    frontier = DFS.gen_rated_frontier(grid)
+    score = DFS.rate(grid)
+
+    frontier.sort(key=lambda x:x[1], reverse=True)
+
+    score = DFS.rate(grid)
+
+    ex.execute(frontier[0][0])
+    score = DFS.rate(grid)
+
+    dic = DFS.rate_dict(grid, True)
+
+    show = grid.show()
+
+    ex.undo()
+    score = DFS.rate(grid)
+
+    show = grid.show()
+
+    ex.execute(frontier[1][0])
+    score = DFS.rate(grid)
+
+    grid.show()
+
+    ex.undo()
+    score = DFS.rate(grid)
+
+    grid.show()
+
+    ex.execute(frontier[2][0])
+    score = DFS.rate(grid)
+
+    grid.show()
+
+    grid.get_tile((3,6)).visitor
+
+    grid.get_tile((5,5)).visitor
+
+    grid.get_tile((4,6)).type_object.health
+
+    grid.get_tile((4,5)).type_object.health
+
+    DFS.rate_dict(grid, True)
+
+    sum(sum(tile.type_object.health for tile in tiles if '🏢' in repr(tile) or '🏘️' in repr(tile)) for tiles in
+    grid.tiles)
+
+    grid.show()
 
 
 if __name__ == "__main__":
-    main()
+    grid = main()
+    test_bug(grid)

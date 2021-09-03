@@ -42,7 +42,6 @@ class IUnit(ABC):
     def reset_turn(self):
         pass
 
-    @property
     @abstractmethod
     def __repr__(self):
         pass
@@ -70,7 +69,7 @@ class Unit(IUnit):
 
     @health.setter
     def health(self, value):
-        self._health = Util.clamp(value, 0, self.max_health)
+        self._health = min(value, self.max_health)
 
     @property
     def at_max_health(self):
