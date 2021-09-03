@@ -13,7 +13,7 @@ from unit import Mech, Vek, Unit
 from util import Compass
 
 
-def main():
+def reset_grid():
     gb = GridBuilder()
 
     gb.place(WaterTile(), (0, 4))
@@ -251,5 +251,5 @@ def test_bug(grid):
 
 
 if __name__ == "__main__":
-    grid = main()
+    grid = reset_grid()
     test_bug(grid)

@@ -1,5 +1,4 @@
 from abc import ABC, abstractmethod
-
 from util import Compass
 
 
@@ -102,7 +101,7 @@ class DamageCommand(ICommand):
                 before = tile.type_object.health
                 tile.type_object.health -= self.amount
                 after = tile.type_object.health
-                self.tile_damage_dealt = before-after
+                self.tile_damage_dealt = before - after
 
             if tile.visitor:
                 self.damage_unit_command = DamageUnitCommand(tile.visitor, self.amount, self.grid)
@@ -158,6 +157,57 @@ class DamageUnitCommand(ICommand):
 
 
 class PushCommand(ICommand):
+    def __init__(self, grid, coord, direction):
+        self.grid = grid
+        self.coord = coord
+        self.direction = direction
+        self.commands = None
+
+    def __repr__(self):
+        return f"PUSH {self.coord} to {Compass.match(self.direction)}"
+
+    # if unit -> unit then deal 1 damage to each
+    # if building -> unit exit
+    # if unit -> building/mountain deal 1 damage to each
+    # if ground vek -> water kill vek
+    # if unit -> any unoccupied tile, move unit to tile
+    def set_commands(self):
+        xi, yi = self.coord
+        dx, dy = self.direction
+        xf, yf = (xi + dx, yi + dy)
+
+        try:
+            tilei = self.grid.get_tile((xi, yi))
+            tilef = self.grid.get_tile((xf, yf))
+        except IndexError:
+            return []
+
+        if not tilei.visitor:
+            return []  # do appropriate clean up
+
+        if tilef.visitor:
+            return [DamageUnitCommand(tilei.visitor, 1, self.grid),
+                    DamageUnitCommand(tilef.visitor, 1, self.grid)]
+
+        if not tilef.can_move_through():
+            return [DamageUnitCommand(tilei.visitor, 1, self.grid), DamageCommand(self.grid, tilef.coord, 1)]
+
+        if tilef.ground_vek_dies_when_pushed_into() and not tilei.visitor.is_flying and not tilei.visitor.is_massive:
+            return [DamageUnitCommand(tilei.visitor, tilei.visitor.health, self.grid)]
+
+        return [MoveCommand(self.grid, tilei.coord, tilef.coord)]
+
+    def execute(self):
+        self.commands = self.set_commands()
+        for command in self.commands:
+            command.execute()
+
+    def undo(self):
+        for command in self.commands[::-1]:
+            command.undo()
+
+
+class PushCommandOld(ICommand):
     def __init__(self, grid, coord, direction):
         self.grid = grid
         self.coord = coord

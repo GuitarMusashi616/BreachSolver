@@ -18,6 +18,9 @@ class Destructable(ITile):
     def vek_can_emerge(self):
         return self.tile.vek_can_emerge()
 
+    def ground_vek_dies_when_pushed_into(self):
+        return self.tile.ground_vek_dies_when_pushed_into()
+
     def deal_damage(self):
         return 0
 

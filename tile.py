@@ -11,6 +11,10 @@ class ITile(ABC):
         pass
 
     @abstractmethod
+    def ground_vek_dies_when_pushed_into(self):
+        pass
+
+    @abstractmethod
     def damage(self, amount):
         pass
 
@@ -48,6 +52,9 @@ class Tile(ITile):
     def vek_can_emerge(self):
         return False
 
+    def ground_vek_dies_when_pushed_into(self):
+        return False
+
 
 class TileInst(ITile):
     def __init__(self, type_object, coord):
@@ -75,6 +82,9 @@ class TileInst(ITile):
 
     def vek_can_emerge(self):
         return self.type_object.vek_can_emerge()
+
+    def ground_vek_dies_when_pushed_into(self):
+        return self.type_object.ground_vek_dies_when_pushed_into()
 
     def move_units(self, tile):
         # move this tiles units to tile

@@ -13,6 +13,9 @@ class WaterTile(Tile):
     def __repr__(self):
         return "💦"
 
+    def ground_vek_dies_when_pushed_into(self):
+        return True
+
 
 class DestructableTile(Tile):
     """Abstract Base Class for Mountain and Building Tiles"""

@@ -54,6 +54,8 @@ class Unit(IUnit):
         self.health = health
         self.moves = moves
         self.abilities = []
+        self.is_flying = False
+        self.is_massive = False
         self.has_moved = False
         self.has_fired = False
 
@@ -134,6 +136,7 @@ class Unit(IUnit):
 class Mech(Unit):
     def __init__(self, name, max_health=4, health=4, moves=3):
         super().__init__(name, max_health, health, moves)
+        self.is_massive = True
 
 
 class Vek(Unit):
