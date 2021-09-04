@@ -1,6 +1,7 @@
 from abc import abstractmethod
 
-from command import ICommand, CompositeCommand, DamageAdjacentCommand, DamageCommand, MoveCommand, DamageUnitCommand
+from command import ICommand, CompositeCommand, DamageAdjacentCommand, DamageCommand, MoveCommand, DamageUnitCommand, \
+    PushCommand
 from util import Compass
 
 
@@ -81,7 +82,7 @@ class VekCharge(ICommand):
 
             if not tile.can_move_through():
                 new_tile = self.grid.get_tile((x + dx * (i - 1), y + dy * (i - 1)))
-                self.commands = [MoveCommand(self.grid, self.unit.coord, new_tile.coord), DamageCommand(self.grid, tile.coord, self.damage)]
+                self.commands = [MoveCommand(self.grid, self.unit.coord, new_tile.coord), DamageCommand(self.grid, tile.coord, self.damage), PushCommand(self.grid, tile.coord, self.direction)]
                 for command in self.commands:
                     command.execute()
                 return
