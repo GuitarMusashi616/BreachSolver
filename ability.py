@@ -31,7 +31,7 @@ class Move(IAbility):
             return []
 
         return [CommandDecorator(self.unit, MoveCommand(self.grid, self.unit.coord, coord)) for coord in
-                self.grid.get_movable_tiles(self.unit.coord, self.unit.moves)]
+                self.grid.get_movable_tiles(self.unit.coord, self.unit.moves, self.unit.is_flying)]
 
 
 class Repair(IAbility):
@@ -77,4 +77,21 @@ class Beam(IAbility):
         for dx, dy in Compass.FACES:
             if x + dx in range(self.grid.square_len) and y + dy in range(self.grid.square_len):
                 actions.append(CommandDecorator(self.unit, self.ammo_type(self.unit, self.grid, (dx, dy), self.damage)))
+        return actions
+
+
+class Melee(IAbility):
+    def __init__(self, unit, grid, ammo_type, damage, reach=1):
+        super().__init__(unit)
+        self.grid = grid
+        self.ammo_type = ammo_type
+        self.damage = damage
+        self.reach = reach
+
+    def gen_actions(self):
+        actions = []
+        if self.should_not_fire:
+            return []
+        for dx, dy in Compass.FACES:
+            actions.append(CommandDecorator(self.unit, self.ammo_type(self.unit, self.grid, (dx, dy), self.damage, self.reach)))
         return actions

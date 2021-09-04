@@ -52,6 +52,30 @@ class TestGrid(unittest.TestCase):
         self.assertEqual(True, grid.find('Scarab').is_alive)
         self.assertEqual(grid.find('Scarab'), grid.get_tile((6, 1)).visitor)
 
+    def test_summon_boulder(self):
+        grid = reset_grid()
+        sm = grid.find('Boulder Mech')
+        move = sm.gen_actions()[10]
+        self.execute(move, "MOVE (7, 3) to (7, 2)")
+        shoot = sm.gen_actions()[7]
+        self.execute(shoot, "BOULDER SHELL at (5, 2)")
+        self.assertEqual(True, grid.find('Boulder 2').is_alive)
+        self.assertEqual(grid.find('Boulder 2'), grid.get_tile((5, 2)).visitor)
+        shoot.undo()
+        self.assertRaises(KeyError, grid.find, 'Boulder 2')
+        self.assertEqual(None, grid.get_tile((5, 2)).visitor)
+        shoot.execute()
+        self.assertEqual(True, grid.find('Boulder 2').is_alive)
+        self.assertEqual(grid.find('Boulder 2'), grid.get_tile((5, 2)).visitor)
+
+
+
+
+
+    def test_heal(self):
+        # heal when full health
+        pass
+
 
 if __name__ == '__main__':
     unittest.main()

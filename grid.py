@@ -14,7 +14,7 @@ class IGrid(ABC):
     #         pass
 
     @abstractmethod
-    def get_movable_tiles(self, coord, moves):
+    def get_movable_tiles(self, coord, moves, is_flying):
         pass
 
     @abstractmethod
@@ -29,17 +29,18 @@ class Grid(IGrid):
         #         self.veks = veks
         self.units = units
         self.square_len = square_len
+        self.end_commands = []
 
     def show(self):
         return pd.DataFrame(self.tiles)
 
     @property
     def mechs(self):
-        return [v for k,v in self.units.items() if isinstance(v, Mech) and v.is_alive]
+        return [v for k, v in self.units.items() if isinstance(v, Mech) and v.is_alive]
 
     @property
     def veks(self):
-        return [v for k,v in self.units.items() if isinstance(v, Vek) and v.is_alive]
+        return [v for k, v in self.units.items() if isinstance(v, Vek) and v.is_alive]
 
     def find(self, unit_name):
         return self.units[unit_name]
@@ -59,9 +60,14 @@ class Grid(IGrid):
     #         return terrain
 
     def can_move_through(self, coord):
-        x, y = coord
         try:
-            return self.tiles[x][y].can_move_through()
+            return self.get_tile(coord).can_move_through()
+        except IndexError:
+            return False
+
+    def can_fly_through(self, coord):
+        try:
+            return self.get_tile(coord).can_fly_through()
         except IndexError:
             return False
 
@@ -74,7 +80,7 @@ class Grid(IGrid):
         unit.coord = coord
 
     @staticmethod
-    def add_to_units(units, unit):
+    def add_to_units(units, unit):  # will only work up to 9 ie no Scarab 10
         while unit.name in units:
             try:
                 num = int(unit.name[-1])
@@ -106,15 +112,19 @@ class Grid(IGrid):
     #             pass
 
     def damage(self, coord, amount=1):
-        x, y = coord
-        self.tiles[x][y].damage(amount)
+        self.get_tile(coord).damage(amount)
 
     def get_tile(self, coord):
         x, y = coord
+        if not 0 <= x < self.square_len or not 0 <= y < self.square_len:
+            raise IndexError(f"{coord} is out of range of grid ({self.square_len}x{self.square_len})")
         return self.tiles[x][y]
 
-    def get_movable_tiles(self, coord, moves):
-        return self.get_neighboring_tiles(coord, moves, self.can_move_through)
+    def get_movable_tiles(self, coord, moves, is_flying):
+        if not is_flying:
+            return self.get_neighboring_tiles(coord, moves, self.can_move_through)
+        tiles = self.get_neighboring_tiles(coord, moves, self.can_fly_through)
+        return {tile for tile in tiles if self.get_tile(tile).can_move_through() and self.get_tile(tile).visitor is None}
 
     def get_neighboring_tiles(self, coord, moves, condition=lambda coord: True):
         explored = {coord}
@@ -130,6 +140,8 @@ class Grid(IGrid):
         while queue:
             x, y = queue.pop()
             for dy, dx in [(-1, 0), (1, 0), (0, 1), (0, -1)]:
+                if x+dx < 0 or self.square_len <= x+dx or y+dy < 0 or self.square_len <= y+dy:
+                    continue
                 new_coord = (x + dx, y + dy)
                 if new_coord not in explored:
                     if condition(new_coord):

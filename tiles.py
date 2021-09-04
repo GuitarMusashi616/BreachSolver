@@ -39,18 +39,24 @@ class MountainTile(DestructableTile):
     def __repr__(self):
         return "🗻"
 
+    def can_fly_through(self):
+        return False
+
 
 class ForestTile(Tile):
     def __repr__(self):
         return "🌲"
+
+    def vek_can_emerge(self):
+        return True
 
 
 class ForestFireTile(Tile):
     def __repr__(self):
         return "🔥"
 
-    def deal_damage(self):
-        return 1
+    # def deal_damage(self):
+    #     return 1
 
 
 class SpawnTile(Tile):
@@ -60,8 +66,8 @@ class SpawnTile(Tile):
     def vek_can_emerge(self):
         return True
 
-    def deal_damage(self):
-        return 1
+    # def deal_damage(self):
+    #     return 1
 
 
 class CivilianTile(DestructableTile):

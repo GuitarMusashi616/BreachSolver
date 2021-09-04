@@ -12,6 +12,14 @@ class Executor:
         self.history.append(command)
         command.execute()
 
+    def batch(self, commands):
+        for command in commands:
+            self.execute(command)
+
     def undo(self):
         command = self.history.pop()
         command.undo()
+
+    def undo_all(self):
+        while self.history:
+            self.undo()

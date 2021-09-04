@@ -160,6 +160,31 @@ class DamageUnitCommand(ICommand):
         self.damage_dealt = None
 
 
+class HealUnitCommand(ICommand):
+    def __init__(self, unit, amount, grid):
+        self.unit = unit
+        self.amount = amount
+        self.grid = grid
+        self.amount_healed = None
+
+    def __repr__(self):
+        return f"HEAL {self.unit} +{self.amount}"
+
+    def execute(self):
+        if not self.unit.is_alive:
+            self.amount_healed = 0
+            return  # can't heal a dead unit
+        before = self.unit.health
+        self.unit.health += self.amount
+        after = self.unit.health
+        self.amount_healed = after-before
+
+    def undo(self):
+        assert self.amount_healed is not None, f"{self.unit} has yet to heal {self.amount}"
+        self.unit.health += self.amount_healed
+        self.amount_healed = None
+
+
 class PushCommand(ICommand):
     def __init__(self, grid, coord, direction):
         self.grid = grid
@@ -316,6 +341,15 @@ class PushAwayCommand(CompositeCommand):
         x, y = coord
         for dx, dy in faces:
             commands.append(PushCommand(grid, (x + dx, y + dy), (dx, dy)))
+        super().__init__(commands)
+
+
+class DamageAdjacentCommand(CompositeCommand):
+    def __init__(self, grid, coord, damage):
+        commands = []
+        x, y = coord
+        for dx, dy in Compass.FACES:
+            commands.append(DamageCommand(grid, (x + dx, y + dy), damage))
         super().__init__(commands)
 
 

@@ -7,6 +7,10 @@ class ITile(ABC):
         pass
 
     @abstractmethod
+    def can_fly_through(self):
+        pass
+
+    @abstractmethod
     def vek_can_emerge(self):
         pass
 
@@ -18,10 +22,15 @@ class ITile(ABC):
     def damage(self, amount):
         pass
 
+    @property
     @abstractmethod
-    def deal_damage(self) -> int:
-        """fire tiles burn visitor, spawn tiles hurt visitor, etc"""
+    def health(self):
         pass
+
+    # @abstractmethod
+    # def deal_damage(self) -> int:
+    #     """fire tiles burn visitor, spawn tiles hurt visitor, etc"""
+    #     pass
 
     @abstractmethod
     def __repr__(self):
@@ -43,10 +52,13 @@ class Tile(ITile):
     def damage(self, amount):
         pass
 
-    def deal_damage(self):
-        return 0
+    # def deal_damage(self):
+    #     return 0
 
     def can_move_through(self):
+        return True
+
+    def can_fly_through(self):
         return True
 
     def vek_can_emerge(self):
@@ -70,6 +82,10 @@ class TileInst(ITile):
             return repr(self.visitor)
 
     @property
+    def health(self):
+        return self.type_object.health
+
+    @property
     def has_no_visitor(self):
         return self.visitor is None or not self.visitor.is_alive
 
@@ -79,6 +95,9 @@ class TileInst(ITile):
 
     def can_move_through(self):
         return self.has_no_visitor and self.type_object.can_move_through()
+
+    def can_fly_through(self):
+        return self.type_object.can_fly_through()
 
     def vek_can_emerge(self):
         return self.type_object.vek_can_emerge()
@@ -110,16 +129,15 @@ class TileInst(ITile):
         self.damage(1)
         tile.damage(1)
 
-    def heal(self,
-             amount):  # todo: make this undamage if people start getting raised from the dead (no healing units I think)
+    def heal(self, amount):  # todo: make this undamage if people start getting raised from the dead (no healing units I think)
         self.type_object.heal(amount)
         if self.visitor:
             self.visitor.health += amount
 
-    def deal_damage(self):
-        dmg = self.type_object.deal_damage()
-        self.damage(dmg)
-        return dmg
+    # def deal_damage(self):
+    #     dmg = self.type_object.deal_damage()
+    #     self.damage(dmg)
+    #     return dmg
 
     def damage(self, amount):
         self.type_object.damage(amount)

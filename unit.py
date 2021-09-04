@@ -1,5 +1,6 @@
 from abc import ABC, abstractmethod
 
+from ability import Move, Repair
 from command import NullCommand
 from util import Util
 
@@ -48,14 +49,14 @@ class IUnit(ABC):
 
 
 class Unit(IUnit):
-    def __init__(self, name, max_health=1, health=1, moves=0):
+    def __init__(self, name, max_health=1, health=1, moves=0, is_flying=False):
         self.name = name
         self.max_health = max_health
         self.health = health
         self.moves = moves
         self.abilities = []
         self.on_death = []
-        self.is_flying = False
+        self.is_flying = is_flying
         self.is_massive = False
         self.has_moved = False
         self.has_fired = False
@@ -135,14 +136,13 @@ class Unit(IUnit):
 
 
 class Mech(Unit):
-    def __init__(self, name, max_health=4, health=4, moves=3):
-        super().__init__(name, max_health, health, moves)
+    def __init__(self, name, max_health=4, health=4, moves=3, is_flying=False):
+        super().__init__(name, max_health, health, moves, is_flying)
         self.is_massive = True
 
-
 class Vek(Unit):
-    def __init__(self, name, max_health=3, health=3, moves=3):
-        super().__init__(name, max_health, health, moves)
+    def __init__(self, name, max_health=3, health=3, moves=3, is_flying=False):
+        super().__init__(name, max_health, health, moves, is_flying)
         self.target = NullCommand()
 
     @property

@@ -1,14 +1,22 @@
 from IPython.core.display import display
 from IPython.display import clear_output
 from time import sleep
+
+from command import MoveCommand
 from executor import Executor
 
 
 class Game:
-    def __init__(self, grid):
+    def __init__(self, grid, out_of_order=False):
         self.grid = grid
         self.ex = Executor()
-        self.round(1)
+        if out_of_order:
+            self.out_of_order_rounds(1)
+        else:
+            self.round(1)
+
+    def __repr__(self):
+        return repr(self.grid)
 
     def show(self):
         display(self.grid.show())
@@ -50,13 +58,66 @@ class Game:
         for _ in self.grid.mechs:
             self.turn()
 
+        self.ask_for_next_round(self.round, i+1)
+
+    def ask_for_next_round(self, func, i):
         answer = input("next round (y/n)?")
         if answer == 'y':
-            for mech in self.grid.mechs:
-                mech.reset_turn()
-            self.round(i+1)
+            for _, unit in self.grid.units.items():
+                unit.reset_turn()
+            func(i)
         else:
             return
+
+    @staticmethod
+    def gen_mech_frontier(grid):
+        frontier = []
+        for mech in grid.mechs:
+            for _,action in mech.gen_actions().items():
+                frontier.append(action)
+        return frontier
+
+    @staticmethod
+    def gen_vek_frontier(grid):
+        frontier = []
+        for vek in grid.veks:
+            for _, action in vek.gen_actions().items():
+                frontier.append(action)
+        return frontier
+
+    def out_of_order_rounds(self, i):
+        print(f"Round {i}")
+        frontier = self.gen_mech_frontier(self.grid)
+        j = 1
+        while frontier:
+            self.clear()
+            print(f"Turn {j}")
+            self.show()
+            action = self.make_choice("Which action? ", frontier)
+            self.ex.execute(action)
+            frontier = self.gen_mech_frontier(self.grid)
+            j += 1
+
+        self.vek_turn()
+        self.ask_for_next_round(self.out_of_order_rounds, i+1)
+
+    def vek_turn(self):
+        frontier = self.gen_vek_frontier(self.grid)
+        commands = []
+        j = 1
+        while frontier:
+            self.clear()
+            print(f"Turn {j}")
+            self.show()
+            action = self.make_choice("Which action? ", frontier)
+            if not isinstance(action.command, MoveCommand):
+                commands.append(action)
+                action.unit.target = action
+            self.ex.execute(action)
+            frontier = self.gen_vek_frontier(self.grid)
+            j += 1
+        for command in commands[::-1]:
+            command.undo()
 
     def turn(self):
         mech = self.make_choice("Which Mech to Move? ", [mech for mech in self.grid.mechs if mech.gen_actions()])

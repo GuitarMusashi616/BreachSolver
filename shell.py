@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 
-from command import ICommand, DamageCommand, SummonCommand, CompositeCommand, PushAwayCommand
+from command import ICommand, DamageCommand, SummonCommand, CompositeCommand, PushAwayCommand, DamageAdjacentCommand
 from unit import Unit
 from util import Compass
 
@@ -19,11 +19,10 @@ class IShell(ICommand):
 class ClusterShell(CompositeCommand, IShell):
     def __init__(self, unit, grid, damage, coord):
         self.coord = coord
-        commands = []
-        x, y = coord
-        for dx, dy in Compass.FACES:
-            commands.append(DamageCommand(grid, (x + dx, y + dy), damage))
-        commands.append(PushAwayCommand(grid, coord))
+        commands = [
+            DamageAdjacentCommand(grid, coord, damage),
+            PushAwayCommand(grid, coord),
+        ]
         super().__init__(commands)
 
     def __repr__(self):
@@ -79,6 +78,8 @@ class VekShell(IShell):
         return f"VEK SHELL at {self.coord}"
 
     def execute(self):
+        if not self.unit.is_alive:
+            return
         try:
             tile = self.grid.get_tile(self.coord)
             tile.damage(self.damage)

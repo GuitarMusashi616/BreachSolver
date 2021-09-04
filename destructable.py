@@ -15,14 +15,17 @@ class Destructable(ITile):
     def can_move_through(self):
         return self.tile.can_move_through()
 
+    def can_fly_through(self):
+        return self.tile.can_fly_through()
+
     def vek_can_emerge(self):
         return self.tile.vek_can_emerge()
 
     def ground_vek_dies_when_pushed_into(self):
         return self.tile.ground_vek_dies_when_pushed_into()
 
-    def deal_damage(self):
-        return 0
+    # def deal_damage(self):
+    #     return 0
 
     @property
     def health(self):
@@ -30,7 +33,7 @@ class Destructable(ITile):
 
     @health.setter
     def health(self, value):
-        self._health = Util.clamp(value, 0, self.max_health)
+        self._health = min(value, self.max_health)
 
         if self.tile == self.tile_alive and self._health <= 0:
             self.tile = self.tile_dead

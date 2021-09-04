@@ -1,7 +1,8 @@
 from IPython.core.display import display
 
-from command import MoveCommand, DamageUnitCommand, DamageCommand, SpawnCommand
+from command import MoveCommand, DamageUnitCommand, DamageCommand, SpawnCommand, HealUnitCommand
 from destructable import Destructable
+from executor import Executor
 from tiles import CorporateTile, CivilianTile
 from unit import Vek
 from main import reset_grid
@@ -69,39 +70,21 @@ class DFS:
 
     @staticmethod
     def rate_base(grid, verbose=False):
-        commands = []
+        ex = Executor()
 
-        commands.extend([
-            DamageUnitCommand(grid.find('Alpha Firefly'), 1, grid),
-            DamageCommand(grid, (5, 1), 1),
-            DamageCommand(grid, (5, 1), 2),
-            DamageCommand(grid, (6, 3), 1),
-            DamageCommand(grid, (6, 4), 1),
-            SpawnCommand(grid, (6, 2), Vek("Firefly")),
-            SpawnCommand(grid, (5, 4), Vek("Firefly")),
-        ])
-
-        for vek in grid.veks:
-            commands.append(vek.target)
-
-        for command in commands:
-            command.execute()
+        for command in grid.end_commands:
+            ex.execute(command)
 
         if verbose:
             display(grid.show())
 
         power = DFS.power_count(grid)
-
-        # power = sum(
-        #     sum(tile.type_object.health for tile in tiles if '🏢' in repr(tile) or '🏘️' in repr(tile)) for tiles in
-        #     grid.tiles)
         mech_alive = sum(1 for mech in grid.mechs if mech.health > 0)
         mech_total = sum(mech.health for mech in grid.mechs)
         vek_alive = sum(1 for vek in grid.veks if vek.health > 0)
         vek_total = sum(vek.health for vek in grid.veks)
 
-        for command in commands[::-1]:
-            command.undo()
+        ex.undo_all()
 
         return power, mech_alive, mech_total, vek_alive, vek_total
 
@@ -120,7 +103,7 @@ class DFS:
     @classmethod
     def rate(cls, grid):
         power, mech_alive, mech_total, vek_alive, vek_total = cls.rate_base(grid)
-        return 0 + power * 5 - vek_total - vek_alive * 10 + mech_total + mech_alive * 10
+        return 0 + power*20 - vek_total - vek_alive*10 + mech_total + mech_alive*100
 
     @classmethod
     def alter_rate_and_unalter(cls, grid, action):
