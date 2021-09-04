@@ -18,7 +18,7 @@ class IAbility(ABC):
 
     @property
     def should_not_fire(self):
-        return not self.unit.has_moved or self.unit.has_fired
+        return not self.unit.has_moved or self.unit.has_fired or self.unit.is_waterlogged
 
 
 class Move(IAbility):

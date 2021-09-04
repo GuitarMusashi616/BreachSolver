@@ -1,12 +1,17 @@
 import unittest
-from main import reset_grid
+
+from command import CommandDecorator
+from dfs import DFS
+from dfs_viewer import DFSViewer
+from main import reset_grid, reset_grid3
+
 
 class TestGrid(unittest.TestCase):
     def execute(self, action, name):
         self.assertEqual(name, repr(action))
-        choice_before = action.command.__dict__.copy()  # relies on using command decorator
+        choice_before = action.command.__dict__  # relies on using command decorator
         action.execute()
-        undo_before = action.command.__dict__.copy()
+        undo_before = action.command.__dict__
         action.undo()
         self.assertEqual(choice_before, action.command.__dict__)
         action.execute()
@@ -68,9 +73,22 @@ class TestGrid(unittest.TestCase):
         self.assertEqual(True, grid.find('Boulder 2').is_alive)
         self.assertEqual(grid.find('Boulder 2'), grid.get_tile((5, 2)).visitor)
 
+    def test_vek_charge(self):
+        grid = reset_grid3()
+        grid.end_commands[7].execute()
+        self.assertEqual(grid.find("Beetle"), grid.get_tile((3,3)).visitor)
+        self.assertEqual(grid.find("Boulder Mech"), grid.get_tile((2, 3)).visitor)
+        self.assertEqual(4, grid.get_tile((2, 3)).visitor.health)
 
+    def test_vek_beam(self):
+        grid = reset_grid3()
 
+        self.execute(CommandDecorator(grid.find("Beetle"), grid.end_commands[4]), "VekBeam at (5, 4) heading EAST")
+        self.assertEqual(0, grid.get_tile((5,6)).health)
 
+    def test_broken_sequence(self):
+        grid = reset_grid3()
+        dfs = DFS(grid, 3)
 
     def test_heal(self):
         # heal when full health

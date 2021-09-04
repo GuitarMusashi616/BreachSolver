@@ -24,8 +24,8 @@ class Destructable(ITile):
     def ground_vek_dies_when_pushed_into(self):
         return self.tile.ground_vek_dies_when_pushed_into()
 
-    # def deal_damage(self):
-    #     return 0
+    def makes_unit_waterlogged(self):
+        return self.tile.makes_unit_waterlogged()
 
     @property
     def health(self):
@@ -33,7 +33,7 @@ class Destructable(ITile):
 
     @health.setter
     def health(self, value):
-        self._health = min(value, self.max_health)
+        self._health = Util.clamp(value, 0, self.max_health)
 
         if self.tile == self.tile_alive and self._health <= 0:
             self.tile = self.tile_dead

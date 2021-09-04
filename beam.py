@@ -20,7 +20,7 @@ class VekBeam(ICommand):
         self.command = None
 
     def __repr__(self):
-        return f"{self.__class__.__name__} at {self.unit.coord} charging {Compass.match(self.direction)}"
+        return f"{self.__class__.__name__} at {self.unit.coord} heading {Compass.match(self.direction)}"
 
     def execute(self):
         if not self.unit.is_alive:
@@ -36,6 +36,7 @@ class VekBeam(ICommand):
 
             if not tile.can_move_through():
                 self.command = DamageCommand(self.grid, tile.coord, self.damage)
+                self.command.execute()
                 return
 
     def undo(self):
@@ -51,7 +52,7 @@ class VekCharge(ICommand):
         self.grid = grid
         self.direction = direction
         self.damage = damage
-        self.command = None
+        self.commands = []
 
     def __repr__(self):
         return f"{self.__class__.__name__} at {self.unit.coord} charging {Compass.match(self.direction)}"
@@ -67,22 +68,28 @@ class VekCharge(ICommand):
                 tile = self.grid.get_tile((x + dx * i, y + dy * i))
             except IndexError:
                 tile = self.grid.get_tile((x + dx * (i-1), y + dy * (i-1)))
-                self.command = MoveCommand(self.grid, self.unit.coord, tile.coord)
+                self.commands = [MoveCommand(self.grid, self.unit.coord, tile.coord)]
+                for command in self.commands:
+                    command.execute()
                 return
 
             if tile.ground_vek_dies_when_pushed_into() and not self.unit.is_flying and not self.unit.is_massive:
-                self.command = DamageUnitCommand(self.unit, self.unit.health, self.grid)
+                self.commands = [DamageUnitCommand(self.unit, self.unit.health, self.grid)]
+                for command in self.commands:
+                    command.execute()
                 return
 
             if not tile.can_move_through():
-                self.command = DamageCommand(self.grid, tile.coord, self.damage)
+                new_tile = self.grid.get_tile((x + dx * (i - 1), y + dy * (i - 1)))
+                self.commands = [MoveCommand(self.grid, self.unit.coord, new_tile.coord), DamageCommand(self.grid, tile.coord, self.damage)]
+                for command in self.commands:
+                    command.execute()
                 return
 
     def undo(self):
-        if self.command is None:
-            return
-        self.command.undo()
-        self.command = None
+        for command in self.commands[::-1]:
+            command.undo()
+        self.commands = []
 
 
 

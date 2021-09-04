@@ -58,6 +58,7 @@ class Unit(IUnit):
         self.on_death = []
         self.is_flying = is_flying
         self.is_massive = False
+        self.is_waterlogged = False
         self.has_moved = False
         self.has_fired = False
 

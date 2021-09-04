@@ -19,6 +19,10 @@ class ITile(ABC):
         pass
 
     @abstractmethod
+    def makes_unit_waterlogged(self):
+        pass
+
+    @abstractmethod
     def damage(self, amount):
         pass
 
@@ -26,11 +30,6 @@ class ITile(ABC):
     @abstractmethod
     def health(self):
         pass
-
-    # @abstractmethod
-    # def deal_damage(self) -> int:
-    #     """fire tiles burn visitor, spawn tiles hurt visitor, etc"""
-    #     pass
 
     @abstractmethod
     def __repr__(self):
@@ -52,8 +51,8 @@ class Tile(ITile):
     def damage(self, amount):
         pass
 
-    # def deal_damage(self):
-    #     return 0
+    def makes_unit_waterlogged(self):
+        return False
 
     def can_move_through(self):
         return True
@@ -105,6 +104,9 @@ class TileInst(ITile):
     def ground_vek_dies_when_pushed_into(self):
         return self.type_object.ground_vek_dies_when_pushed_into()
 
+    def makes_unit_waterlogged(self):
+        return self.type_object.makes_unit_waterlogged()
+
     def move_units(self, tile):
         # move this tiles units to tile
         if self.has_no_visitor:
@@ -116,6 +118,11 @@ class TileInst(ITile):
         tile.visitor = self.visitor
         tile.visitor.coord = tile.coord
         self.visitor = None
+
+        if tile.makes_unit_waterlogged():
+            tile.visitor.is_waterlogged = True
+        else:
+            tile.visitor.is_waterlogged = False
 
     def push_units(self, tile):
         # self gets pushed into tile
@@ -133,11 +140,6 @@ class TileInst(ITile):
         self.type_object.heal(amount)
         if self.visitor:
             self.visitor.health += amount
-
-    # def deal_damage(self):
-    #     dmg = self.type_object.deal_damage()
-    #     self.damage(dmg)
-    #     return dmg
 
     def damage(self, amount):
         self.type_object.damage(amount)

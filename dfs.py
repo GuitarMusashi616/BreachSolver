@@ -1,4 +1,5 @@
 from IPython.core.display import display
+import sys
 
 from command import MoveCommand, DamageUnitCommand, DamageCommand, SpawnCommand, HealUnitCommand
 from destructable import Destructable
@@ -7,12 +8,14 @@ from tiles import CorporateTile, CivilianTile
 from unit import Vek
 from main import reset_grid
 
+
 class DFS:
     def __init__(self, grid, cutoff=None):
         self.grid = grid
         self.explored = {}
         self.current = ""
         self.full_path = []
+        self.protected = {}
         self.cutoff = cutoff
         self.search(self.rate(self.grid))
 
@@ -40,15 +43,13 @@ class DFS:
         for action, score in frontier:
             digits = self.append_current(action)
             action.execute()
-            self.full_path.append(action)
+            self.full_path.append(("DO", action))
             new_score = self.rate(self.grid)
-            if new_score != score:
-                print(f"new score {new_score} != old score {score} at {self.current}")
-                print(self.full_path)
-                return
+            assert new_score == score, f"new score {new_score} != old score {score} at {action}"
 
             self.search(score)
             action.undo()
+            self.full_path.append(("UNDO", action))
             self.pop_current(digits)
 
     @classmethod
@@ -69,8 +70,19 @@ class DFS:
                 'Mech Total Health': mech_total}
 
     @staticmethod
-    def rate_base(grid, verbose=False):
+    def count_objectives(grid):
+        power = DFS.power_count(grid)
+        mech_alive = sum(1 for mech in grid.mechs if mech.health > 0)
+        mech_total = sum(mech.health for mech in grid.mechs)
+        vek_alive = sum(1 for vek in grid.veks if vek.health > 0)
+        vek_total = sum(vek.health for vek in grid.veks)
+        return power, mech_alive, mech_total, vek_alive, vek_total
+
+    @classmethod
+    def rate_base(cls, grid, verbose=False):
         ex = Executor()
+
+        before = cls.count_objectives(grid)
 
         for command in grid.end_commands:
             ex.execute(command)
@@ -78,13 +90,14 @@ class DFS:
         if verbose:
             display(grid.show())
 
-        power = DFS.power_count(grid)
-        mech_alive = sum(1 for mech in grid.mechs if mech.health > 0)
-        mech_total = sum(mech.health for mech in grid.mechs)
-        vek_alive = sum(1 for vek in grid.veks if vek.health > 0)
-        vek_total = sum(vek.health for vek in grid.veks)
+        power, mech_alive, mech_total, vek_alive, vek_total = cls.count_objectives(grid)
 
-        ex.undo_all()
+        for command in ex.history[::-1]:
+            command.undo()
+
+        after = cls.count_objectives(grid)
+
+        assert before == after, f"{before} {after}"
 
         return power, mech_alive, mech_total, vek_alive, vek_total
 

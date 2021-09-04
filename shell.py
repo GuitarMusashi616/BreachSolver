@@ -72,7 +72,7 @@ class VekShell(IShell):
         self.offset = self.determine_offset(self.unit.coord, coord)
         self.grid = grid
         self.damage = damage
-        self.tile_damaged = None
+        self.command = None
 
     def __repr__(self):
         return f"VEK SHELL at {self.coord}"
@@ -80,12 +80,8 @@ class VekShell(IShell):
     def execute(self):
         if not self.unit.is_alive:
             return
-        try:
-            tile = self.grid.get_tile(self.coord)
-            tile.damage(self.damage)
-            self.tile_damaged = tile
-        except IndexError:
-            return
+        self.command = DamageCommand(self.grid, self.coord, self.damage)
+        self.command.execute()
 
     @property
     def coord(self):
@@ -94,9 +90,9 @@ class VekShell(IShell):
         return x + dx, y + dy
 
     def undo(self):
-        if self.tile_damaged is None:
+        if self.command is None:
             return
-        self.tile_damaged.heal(self.damage)
+        self.command.undo()
 
     @staticmethod
     def determine_offset(from_coord, to_coord):
