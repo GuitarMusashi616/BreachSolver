@@ -22,6 +22,11 @@ class ITile(ABC):
     def makes_unit_waterlogged(self):
         pass
 
+    @property
+    @abstractmethod
+    def is_objective_to_protect(self):
+        pass
+
     @abstractmethod
     def damage(self, amount):
         pass
@@ -44,6 +49,10 @@ class Tile(ITile):
     @health.setter
     def health(self, value):
         pass
+
+    @property
+    def is_objective_to_protect(self):
+        raise ValueError("Can only call/set this on instance layers of tile")
 
     def heal(self, amount):
         pass
@@ -73,6 +82,7 @@ class TileInst(ITile):
         self.destroyed = None
         self.visitor = None
         self.coord = coord
+        self.is_objective_to_protect = False
 
     def __repr__(self):
         if self.has_no_visitor:
@@ -83,6 +93,14 @@ class TileInst(ITile):
     @property
     def health(self):
         return self.type_object.health
+
+    @property
+    def is_objective_to_protect(self):
+        return self._is_objective_to_protect
+
+    @is_objective_to_protect.setter
+    def is_objective_to_protect(self, value):
+        self._is_objective_to_protect = value
 
     @property
     def has_no_visitor(self):

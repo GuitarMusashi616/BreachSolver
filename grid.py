@@ -1,7 +1,8 @@
 from abc import ABC, abstractmethod
 import pandas as pd
 
-from unit import Mech, Vek
+from mech import Mech
+from vek import Vek
 
 
 class IGrid(ABC):
@@ -19,6 +20,10 @@ class IGrid(ABC):
 
     @abstractmethod
     def get_artillery_tiles(self, coord):
+        pass
+
+    @abstractmethod
+    def get_full_col_and_row(self, coord):
         pass
 
 
@@ -41,6 +46,10 @@ class Grid(IGrid):
     @property
     def veks(self):
         return [v for k, v in self.units.items() if isinstance(v, Vek) and v.is_alive]
+
+    @property
+    def veks_in_order(self):
+        return self.veks.sort(key=lambda x: x.attack_order)
 
     def find(self, unit_name):
         return self.units[unit_name]
@@ -70,6 +79,10 @@ class Grid(IGrid):
             return self.get_tile(coord).can_fly_through()
         except IndexError:
             return False
+
+    def gb_place_on_tile(self, unit, coord):
+        self.place_on_tile(self.tiles, unit, coord)
+        self.add_to_units(self.units, unit)
 
     @staticmethod
     def place_on_tile(tiles, unit, coord):
@@ -150,13 +163,17 @@ class Grid(IGrid):
         return new_queue
 
     def get_artillery_tiles(self, coord):
-        i, j = coord
-        full_col = self.get_full_col(i)
-        full_row = self.get_full_row(j)
+        full_col_and_row = self.get_full_col_and_row(coord)
 
         exclude = self.get_neighboring_tiles(coord, 1)
 
-        return [x for x in full_row + full_col if x not in exclude]
+        return [x for x in full_col_and_row if x not in exclude]
+
+    def get_full_col_and_row(self, coord):
+        i, j = coord
+        full_col = self.get_full_col(i)
+        full_row = self.get_full_row(j)
+        return full_col+full_row
 
     def get_full_col(self, i):
         return [(i, j) for j in range(self.square_len)]

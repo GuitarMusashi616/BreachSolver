@@ -1,6 +1,7 @@
 from abc import ABC, abstractmethod
 
-from command import ICommand, DamageCommand, SummonCommand, CompositeCommand, PushAwayCommand, DamageAdjacentCommand
+from command import ICommand, DamageCommand, SummonCommand, CompositeCommand, PushAwayAndDamageCommand, \
+    DamageAdjacentCommand, DamageUnitCommand
 from unit import Unit
 from util import Compass
 
@@ -20,8 +21,7 @@ class ClusterShell(CompositeCommand, IShell):
     def __init__(self, unit, grid, damage, coord):
         self.coord = coord
         commands = [
-            DamageAdjacentCommand(grid, coord, damage),
-            PushAwayCommand(grid, coord),
+            PushAwayAndDamageCommand(grid, coord, damage=damage),
         ]
         super().__init__(commands)
 
@@ -32,7 +32,7 @@ class ClusterShell(CompositeCommand, IShell):
 class RegularShell(CompositeCommand, IShell):
     def __init__(self, unit, grid, damage, coord):
         self.coord = coord
-        super().__init__([DamageCommand(grid, coord, damage), PushAwayCommand(grid, coord)])
+        super().__init__([DamageCommand(grid, coord, damage), PushAwayAndDamageCommand(grid, coord)])
 
     def __repr__(self):
         return f"REGULAR SHELL at {self.coord}"
@@ -49,7 +49,7 @@ class BoulderShell(CompositeCommand, IShell):
             commands.append(SummonCommand(Unit("Boulder", max_health=1, health=1, moves=0), grid, coord))
         else:
             commands.append(DamageCommand(grid, coord, damage))
-        commands.append(PushAwayCommand(grid, coord, faces))
+        commands.append(PushAwayAndDamageCommand(grid, coord, faces))
 
         super().__init__(commands)
 
@@ -63,6 +63,19 @@ class BoulderShell(CompositeCommand, IShell):
 
     def __repr__(self):
         return f"BOULDER SHELL at {self.coord}"
+
+
+class JumpShell(CompositeCommand, IShell):
+    def __init__(self, unit, grid, damage, coord):
+        commands = [
+            PushAwayAndDamageCommand(grid, coord, damage=damage),
+            DamageUnitCommand(unit, damage, grid),
+        ]
+        self.coord = coord
+        super().__init__(commands)
+
+    def __repr__(self):
+        return f"JUMP SHELL at {self.coord}"
 
 
 class VekShell(IShell):

@@ -3,7 +3,9 @@ import unittest
 from command import CommandDecorator
 from dfs import DFS
 from dfs_viewer import DFSViewer
-from main import reset_grid, reset_grid3
+from grid_parser import GridParser
+from main import *
+from unit_parser import UnitParser
 
 
 class TestGrid(unittest.TestCase):
@@ -78,13 +80,55 @@ class TestGrid(unittest.TestCase):
         grid.end_commands[7].execute()
         self.assertEqual(grid.find("Beetle"), grid.get_tile((3,3)).visitor)
         self.assertEqual(grid.find("Boulder Mech"), grid.get_tile((2, 3)).visitor)
-        self.assertEqual(4, grid.get_tile((2, 3)).visitor.health)
+        self.assertEqual(3, grid.get_tile((2, 3)).visitor.health)
 
     def test_vek_beam(self):
         grid = reset_grid3()
 
         self.execute(CommandDecorator(grid.find("Beetle"), grid.end_commands[4]), "VekBeam at (5, 4) heading EAST")
         self.assertEqual(0, grid.get_tile((5,6)).health)
+
+    def test_vek_web(self):
+        grid = reset_grid4()
+
+        self.assertEqual({}, grid.find("Boulder Mech").gen_actions())
+
+        act = grid.find("Artillery Mech").gen_actions()[19]
+        act.execute()
+
+        shoot = grid.find("Artillery Mech").gen_actions()[4]
+        shoot.execute()
+
+        self.assertNotEqual({}, grid.find("Boulder Mech").gen_actions())
+
+        shoot.undo()
+
+        self.assertEqual({}, grid.find("Boulder Mech").gen_actions())
+
+        shoot.execute()
+
+        self.assertNotEqual({}, grid.find("Boulder Mech").gen_actions())
+
+        shoot.undo()
+
+        self.assertEqual({}, grid.find("Boulder Mech").gen_actions())
+
+        shoot = grid.find("Artillery Mech").gen_actions()[5]
+        shoot.execute()
+
+        self.assertNotEqual({}, grid.find("Boulder Mech").gen_actions())
+
+        shoot.undo()
+
+        self.assertEqual({}, grid.find("Boulder Mech").gen_actions())
+
+        shoot.execute()
+
+        self.assertNotEqual({}, grid.find("Boulder Mech").gen_actions())
+
+        shoot.undo()
+
+        self.assertEqual({}, grid.find("Boulder Mech").gen_actions())
 
     def test_broken_sequence(self):
         grid = reset_grid3()
@@ -94,6 +138,22 @@ class TestGrid(unittest.TestCase):
         # heal when full health
         pass
 
+    def test_death_mechs(self):
+        def renfield2():
+            grid = GridParser.from_string("2w2g=m2w/gw=4gw/7gm/7g=/wg=5g/=5gmg/4g=g=w/mw5gw")
+            return UnitParser(grid).from_string("""
+            /
+            ov(Alpha Hornet_4_4_#5_E)od-m(Artillery Mech_5_5_4)/
+            6od-m(Siege Mech_5_5_3)/
+            d-m(Boulder Mech_5_5_4)3om(Renfield Bomb_4_4_0)/
+            7os/
+            2ov(Hornet_2_2_#4_N)fv(Hornet_2_2_#7_S)s/
+            3ov(Beetle Leader_6_6_#3_N)ov(Psion Tyrant_2_2_#6)
+            """)
+        grid = renfield2()
+        dfs = DFS(grid, 5)
+
 
 if __name__ == '__main__':
-    unittest.main()
+    # unittest.main()
+    TestGrid().test_death_mechs()

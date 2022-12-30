@@ -61,28 +61,6 @@ class HealCommand(ICommand):
         self.unit.health -= self.healed_amount
 
 
-# class DamageCommand(ICommand):
-# #     def __init__(self, grid, coord, amount):
-# #         self.grid = grid
-# #         self.coord = coord
-# #         self.amount = amount
-# #
-# #     def __repr__(self):
-# #         return f"DAMAGE {self.coord} -{self.amount}"
-# #
-# #     def execute(self):
-# #         try:
-# #             tile = self.grid.get_tile(self.coord)
-# #             tile.damage(self.amount)
-# #         except IndexError:
-# #             pass
-# #
-# #     def undo(self):
-# #         try:
-# #             tile = self.grid.get_tile(self.coord)
-# #             tile.heal(self.amount)
-# #         except IndexError:
-# #             pass
 class DamageCommand(ICommand):
     def __init__(self, grid, coord, amount):
         self.grid = grid
@@ -185,12 +163,14 @@ class HealUnitCommand(ICommand):
         self.amount_healed = None
 
 
-class PushCommand(ICommand):
-    def __init__(self, grid, coord, direction):
+class PushAndDamageCommand(ICommand):
+    """Handles case when unit is killed but is still pushed into something"""
+    def __init__(self, grid, coord, direction, damage=0):
         self.grid = grid
         self.coord = coord
         self.direction = direction
-        self.commands = None
+        self.damage = damage
+        self.commands = []
 
     def __repr__(self):
         return f"PUSH {self.coord} to {Compass.match(self.direction)}"
@@ -227,74 +207,76 @@ class PushCommand(ICommand):
         return [MoveCommand(self.grid, tilei.coord, tilef.coord)]
 
     def execute(self):
-        self.commands = self.set_commands()
+        self.commands = [DamageCommand(self.grid, self.coord, self.damage)]
+        self.commands.extend(self.set_commands())
         for command in self.commands:
             command.execute()
 
     def undo(self):
         for command in self.commands[::-1]:
             command.undo()
+        self.commands = []
 
 
-class PushCommandOld(ICommand):
-    def __init__(self, grid, coord, direction):
-        self.grid = grid
-        self.coord = coord
-        self.direction = direction
-        self.unit_pushed = None
-        self.tiles_damaged = None
-
-    def __repr__(self):
-        return f"PUSH {self.coord} to {Compass.match(self.direction)}"
-
-    def get_dest_tile(self):
-        "The tile that the unit is pushed onto"
-        x, y = self.coord
-        dx, dy = self.direction
-        new_coord = (x + dx, y + dy)
-
-        try:
-            new_tile = self.grid.get_tile(new_coord)
-        except IndexError:
-            return
-
-        return new_tile
-
-    def execute(self):
-        try:
-            tile = self.grid.get_tile(self.coord)
-        except IndexError:
-            return
-
-        if tile.visitor is None:
-            return  # does nothing when no unit is on tile
-
-        new_tile = self.get_dest_tile()
-        if new_tile is None:
-            return  # does nothing when dest tile is out of bounds
-
-        self.unit_pushed = tile.visitor
-        if not new_tile.can_move_through():
-            self.tiles_damaged = True  # saves that tiles have been damaged if unit collides when pushed
-
-        tile.push_units(new_tile)
-
-    def undo(self):
-        if self.unit_pushed is None:
-            return  # does nothing unless a unit was pushed previously
-
-        try:
-            origin_tile = self.grid.get_tile(self.coord)
-            dest_tile = self.get_dest_tile()
-        except IndexError:
-            return
-
-        if self.tiles_damaged:  # just heal both tiles if collision happened
-            origin_tile.heal(1)
-            dest_tile.heal(1)
-            return
-
-        dest_tile.push_units(origin_tile)  # otherwise push the unit back
+# class PushCommandOld(ICommand):
+#     def __init__(self, grid, coord, direction):
+#         self.grid = grid
+#         self.coord = coord
+#         self.direction = direction
+#         self.unit_pushed = None
+#         self.tiles_damaged = None
+#
+#     def __repr__(self):
+#         return f"PUSH {self.coord} to {Compass.match(self.direction)}"
+#
+#     def get_dest_tile(self):
+#         "The tile that the unit is pushed onto"
+#         x, y = self.coord
+#         dx, dy = self.direction
+#         new_coord = (x + dx, y + dy)
+#
+#         try:
+#             new_tile = self.grid.get_tile(new_coord)
+#         except IndexError:
+#             return
+#
+#         return new_tile
+#
+#     def execute(self):
+#         try:
+#             tile = self.grid.get_tile(self.coord)
+#         except IndexError:
+#             return
+#
+#         if tile.visitor is None:
+#             return  # does nothing when no unit is on tile
+#
+#         new_tile = self.get_dest_tile()
+#         if new_tile is None:
+#             return  # does nothing when dest tile is out of bounds
+#
+#         self.unit_pushed = tile.visitor
+#         if not new_tile.can_move_through():
+#             self.tiles_damaged = True  # saves that tiles have been damaged if unit collides when pushed
+#
+#         tile.push_units(new_tile)
+#
+#     def undo(self):
+#         if self.unit_pushed is None:
+#             return  # does nothing unless a unit was pushed previously
+#
+#         try:
+#             origin_tile = self.grid.get_tile(self.coord)
+#             dest_tile = self.get_dest_tile()
+#         except IndexError:
+#             return
+#
+#         if self.tiles_damaged:  # just heal both tiles if collision happened
+#             origin_tile.heal(1)
+#             dest_tile.heal(1)
+#             return
+#
+#         dest_tile.push_units(origin_tile)  # otherwise push the unit back
 
 
 class SummonCommand(ICommand):
@@ -335,12 +317,12 @@ class CompositeCommand(ICommand):
             command.undo()
 
 
-class PushAwayCommand(CompositeCommand):
-    def __init__(self, grid, coord, faces=Compass.FACES):
+class PushAwayAndDamageCommand(CompositeCommand):
+    def __init__(self, grid, coord, faces=Compass.FACES, damage=0):
         commands = []
         x, y = coord
         for dx, dy in faces:
-            commands.append(PushCommand(grid, (x + dx, y + dy), (dx, dy)))
+            commands.append(PushAndDamageCommand(grid, (x + dx, y + dy), (dx, dy), damage))
         super().__init__(commands)
 
 
@@ -378,7 +360,8 @@ class SpawnCommand(ICommand):
 
 
 class CommandDecorator(ICommand):
-    "Keeps track of whether command has been executed already or not, also updates unit state based on if command has been executed"
+    """Keeps track of whether command has been executed already or not, also updates unit state based on if command has
+    been executed """
 
     def __init__(self, unit, command):
         self.unit = unit

@@ -39,6 +39,15 @@ class IUnit(ABC):
     def has_fired(self):
         pass
 
+    @property
+    @abstractmethod
+    def is_webbed(self):
+        pass
+
+    @abstractmethod
+    def webbed_by(self, unit):
+        pass
+
     @abstractmethod
     def reset_turn(self):
         pass
@@ -59,6 +68,7 @@ class Unit(IUnit):
         self.is_flying = is_flying
         self.is_massive = False
         self.is_waterlogged = False
+        self.web_details = None
         self.has_moved = False
         self.has_fired = False
 
@@ -110,11 +120,19 @@ class Unit(IUnit):
         self.has_moved = False
         self.has_fired = False
 
-    #     def heal(self, amount):
-    #         self.health += amount
+    @property
+    def is_webbed(self):
+        if not self.web_details:
+            return None
 
-    #     def damage(self, amount):
-    #         self.health -= amount
+        unit, unit_coord, self_coord = self.web_details
+        if unit.is_alive and unit.coord == unit_coord and self_coord == self.coord:
+            return True
+
+        return False
+
+    def webbed_by(self, unit):
+        self.web_details = (unit, unit.coord, self.coord)
 
     def add(self, ability):
         self.abilities.append(ability)
@@ -134,22 +152,3 @@ class Unit(IUnit):
 
     def __repr__(self):
         return self.name + ' ' + '♡' * self.health
-
-
-class Mech(Unit):
-    def __init__(self, name, max_health=4, health=4, moves=3, is_flying=False):
-        super().__init__(name, max_health, health, moves, is_flying)
-        self.is_massive = True
-
-class Vek(Unit):
-    def __init__(self, name, max_health=3, health=3, moves=3, is_flying=False):
-        super().__init__(name, max_health, health, moves, is_flying)
-        self.target = NullCommand()
-
-    @property
-    def target(self):
-        return self._target
-
-    @target.setter
-    def target(self, command):
-        self._target = command

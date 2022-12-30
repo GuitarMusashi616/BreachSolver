@@ -5,7 +5,7 @@ from command import MoveCommand, DamageUnitCommand, DamageCommand, SpawnCommand,
 from destructable import Destructable
 from executor import Executor
 from tiles import CorporateTile, CivilianTile
-from unit import Vek
+from vek import Vek
 from main import reset_grid
 
 
@@ -41,14 +41,17 @@ class DFS:
             frontier = frontier[:self.cutoff]
 
         for action, score in frontier:
+            old_score = self.rate(self.grid)
             digits = self.append_current(action)
             action.execute()
-            self.full_path.append(("DO", action))
-            new_score = self.rate(self.grid)
-            assert new_score == score, f"new score {new_score} != old score {score} at {action}"
+            self.full_path.append(("DO", action, score))
+            # new_score = self.rate(self.grid)
+            # assert new_score == score, f"new score {new_score} != old score {score} at {action}"
 
             self.search(score)
             action.undo()
+            new_old_score = self.rate(self.grid)
+            assert old_score == new_old_score, f"new old score {new_old_score} does not equal {old_score}"
             self.full_path.append(("UNDO", action))
             self.pop_current(digits)
 
@@ -77,6 +80,13 @@ class DFS:
         vek_alive = sum(1 for vek in grid.veks if vek.health > 0)
         vek_total = sum(vek.health for vek in grid.veks)
         return power, mech_alive, mech_total, vek_alive, vek_total
+
+    @staticmethod
+    def count_objectives2(grid):
+        spawn_tiles_covered = sum(grid.get_tile(x.coord).visitor for x in grid.end_commands if type(x) == "SpawnDamage")
+        time_pods_recovered = 0  # tiles with mech and time pod
+        time_pods_alive = 0  # time pods on map
+        objectives_still_alive = 0  # objectives * tile on map
 
     @classmethod
     def rate_base(cls, grid, verbose=False):
@@ -116,7 +126,9 @@ class DFS:
     @classmethod
     def rate(cls, grid):
         power, mech_alive, mech_total, vek_alive, vek_total = cls.rate_base(grid)
-        return 0 + power*20 - vek_total - vek_alive*10 + mech_total + mech_alive*100
+        # return 0 + power*20 - vek_total*2 - vek_alive*10 + mech_total*4 + mech_alive*40
+        score = 0 + power * 10 - vek_total*2 - vek_alive * 10 + mech_total*3 + mech_alive*15
+        return score
 
     @classmethod
     def alter_rate_and_unalter(cls, grid, action):
@@ -136,6 +148,7 @@ class DFS:
         ls = list(self.explored.items())
         ls.sort(key=lambda x: x[1], reverse=True)
         return ls
+
 
 
 

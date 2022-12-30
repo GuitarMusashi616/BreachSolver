@@ -14,7 +14,7 @@ class IAbility(ABC):
 
     @property
     def should_not_move(self):
-        return self.unit.has_moved or self.unit.has_fired
+        return self.unit.has_moved or self.unit.has_fired or self.unit.is_webbed
 
     @property
     def should_not_fire(self):
@@ -60,6 +60,11 @@ class Artillery(IAbility):
             return []
         return [CommandDecorator(self.unit, self.ammo_type(self.unit, self.grid, self.damage, coord)) for coord in
                 self.gen_viable_targets()]
+
+
+class Cross(Artillery):
+    def gen_viable_targets(self):
+        return [x for x in self.grid.get_full_col_and_row(self.unit.coord) if x != self.unit.coord]
 
 
 class Beam(IAbility):

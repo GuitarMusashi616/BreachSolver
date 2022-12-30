@@ -9,7 +9,9 @@ from melee import VekMelee
 from shell import ClusterShell, BoulderShell, RegularShell, VekShell
 from tiles import WaterTile, MountainTile, GroundTile, CorporateTile, ForestTile, CivilianTile, ForestFireTile, \
     SpawnTile
-from unit import Mech, Vek, Unit
+from unit import Unit
+from vek import Vek
+from mech import Mech
 from util import Compass
 
 
@@ -274,6 +276,93 @@ def reset_grid3():
         DamageCommand(grid, (6, 4), 1),
         DamageCommand(grid, (5, 2), 1),
         DamageCommand(grid, (7, 5), 1),
+    ]
+
+    return grid
+
+
+def reset_grid4():
+    gb = GridBuilder()
+
+    gb.place(WaterTile(), (0, 0))
+    gb.place(WaterTile(), (0, 1))
+    gb.place(Destructable(MountainTile(), GroundTile(), 3), (0, 2))
+    gb.place(Destructable(CivilianTile(), GroundTile(), 2), (0, 3))
+    gb.place(Destructable(MountainTile(), GroundTile(), 3), (0, 6))
+    gb.place(Destructable(MountainTile(), GroundTile(), 3), (0, 7))
+
+    gb.place(WaterTile(), (1, 0))
+    gb.place(Destructable(CivilianTile(), GroundTile(), 2), (1, 2))
+    gb.place(Destructable(CivilianTile(), GroundTile(), 2), (1, 3))
+    gb.place(Destructable(MountainTile(), GroundTile(), 3), (1, 6))
+    gb.place(Destructable(MountainTile(), GroundTile(), 3), (1, 7))
+
+    gb.place(WaterTile(), (1, 5)),
+    gb.place(WaterTile(), (2, 5)),
+    gb.place(WaterTile(), (2, 4)),
+    gb.place(WaterTile(), (2, 3)),
+
+    gb.place(WaterTile(), (2, 6))
+    gb.place(WaterTile(), (3, 6))
+    gb.place(WaterTile(), (3, 5))
+    gb.place(WaterTile(), (3, 4))
+
+    gb.place(Destructable(MountainTile(), GroundTile(), 3), (4, 0))
+    gb.place(Destructable(CivilianTile(), GroundTile(), 2), (4, 1))
+    gb.place(Destructable(CivilianTile(), GroundTile(), 2), (4, 6))
+    gb.place(WaterTile(), (4, 7))
+
+    gb.place(Destructable(CivilianTile(), GroundTile(), 2), (5, 1))
+    gb.place(Destructable(CivilianTile(), GroundTile(), 2), (5, 6))
+    gb.place(WaterTile(), (5, 7))
+
+    gb.place(WaterTile(), (6, 0))
+    gb.place(Destructable(MountainTile(), GroundTile(), 3), (6, 1))
+    gb.place(WaterTile(), (7, 0))
+
+    siege_mech = Mech("Siege Mech", 5, 5, 3)
+    artillery_mech = Mech("Artillery Mech", 5, 5, 4)
+    boulder_mech = Mech("Boulder Mech", 5, 4, 4)
+
+    alpha_firefly = Vek("Alpha Firefly", 5, 5, 2)
+    alpha_scorpion = Vek("Alpha Scorpion", 5, 5, 3)
+
+    gb.place_on_tile(siege_mech, (3, 1))
+    gb.place_on_tile(boulder_mech, (6, 3))
+    gb.place_on_tile(artillery_mech, (3, 3))
+
+    gb.place_on_tile(alpha_scorpion, (5, 3))
+    gb.place_on_tile(alpha_firefly, (6, 5))
+
+    grid = gb.to_grid()
+
+    for mech in grid.mechs:
+        mech.add(Move(mech, grid))
+        mech.add(Repair(mech))
+
+    for vek in grid.veks:
+        vek.add(Move(vek, grid))
+
+    siege_mech.add(Artillery(siege_mech, grid, ClusterShell, 2))
+    boulder_mech.add(Artillery(boulder_mech, grid, BoulderShell, 3))
+    artillery_mech.add(Artillery(artillery_mech, grid, RegularShell, 1))
+
+    boulder_mech.webbed_by(alpha_scorpion)
+
+    grid.end_commands = [
+        DamageCommand(grid, (3, 2), 1),
+        DamageCommand(grid, (6, 1), 1),
+        DamageCommand(grid, (5, 5), 1),
+        #         VekCommand(psy, CompositeCommand([DamageUnitCommand(x, 1, grid) for x in grid.mechs])),
+        DamageCommand(grid, (1, 4), 5),
+        DamageCommand(grid, (3, 3), 5),
+        DamageCommand(grid, (4, 3), 5),
+        DamageCommand(grid, (5, 4), 5),
+        VekBeam(alpha_firefly, grid, Compass.WEST, 3),
+        VekMelee(alpha_scorpion, grid, Compass.SOUTH, 3),
+        #         DamageCommand(grid, (6, 4), 1),
+        #         DamageCommand(grid, (6, 3), 1),
+        #         DamageCommand(grid, (7, 2), 1),
     ]
 
     return grid

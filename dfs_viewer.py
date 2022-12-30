@@ -8,14 +8,56 @@ class DFSViewer:
         self.grid = grid
         self.ls = dfs.get_best()
 
-    def show(self, index, verbose=False):
+    def show(self, index, show_grid=True, verbose=False):
+
         ins, score = self.ls[index]
         history = self.apply_to_grid(ins, verbose)
         print(score)
-        DFS.rate_base(self.grid, True)
+        DFS.rate_base(self.grid, show_grid)
         print(DFS.rate_dict(self.grid))
+
         for command in history[::-1]:
             command.undo()
+
+    def get_df(self, limit):
+        for index in range(limit):
+
+            ins, score = self.ls[index]
+            history = self.apply_to_grid(ins, False)
+            commands = [x for x in self.grid.end_commands]
+            for command in commands:
+                command.execute()
+            df = self.grid.show()
+            if repr(df.iloc[3][4]) == "🏘️ ϟ":
+                display(df)
+            for command in commands[::-1]:
+                command.undo()
+            for command in history[::-1]:
+                command.undo()
+
+    def show_range(self, range):
+        for i in range:
+            self.show(i, False, False)
+
+    def quick_peek(self, max_i=50):
+        explored = {}
+        print("Power", "Veks", "Vek Total Health", "Mechs", "Mech Total Health", sep="\t")
+        for i, stuff in enumerate(self.ls):
+            if i >= max_i:
+                return
+            ins, score = stuff
+            history = self.apply_to_grid(ins)
+            dic = DFS.rate_dict(self.grid)
+            string = ""
+            scores = []
+            for key, val in dic.items():
+                scores.append(val)
+                string += str(val)
+            if string not in explored:
+                explored[string] = True
+                print(f"{i}) {scores}")
+            for command in history[::-1]:
+                command.undo()
 
     def show_all_outcomes(self, ls):
         for ins, score in ls:
@@ -72,4 +114,3 @@ class DFSViewer:
             assert line in frontier, f"{line} of {lines} is not in {frontier}"
             frontier[line].execute()
         return grid
-

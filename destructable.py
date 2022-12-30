@@ -28,6 +28,10 @@ class Destructable(ITile):
         return self.tile.makes_unit_waterlogged()
 
     @property
+    def is_objective_to_protect(self):
+        return self.tile.is_objective_to_protect
+
+    @property
     def health(self):
         return self._health
 
